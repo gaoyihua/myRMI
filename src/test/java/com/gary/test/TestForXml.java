@@ -11,6 +11,6 @@ import java.io.InputStream;
 public class TestForXml {
     public static void main(String[] args) {
         InputStream is = TestForXml.class.getResourceAsStream("/test.xml");
-        System.out.println(is);
+        System.out.println(is );
     }
 }
