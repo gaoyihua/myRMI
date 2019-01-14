@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<rpc-configuration>
+    <rpcBean name="userAction" interface="com.gary.action.UserAction" class="com.gary.action.impl.UserActionImpl"/>
+</rpc-configuration>
+
