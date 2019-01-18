@@ -1,6 +1,7 @@
 package com.gary.core;
 
 import com.gary.exception.PortNotDefinedException;
+import com.gary.util.CloseableUtil;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -65,15 +66,16 @@ public class RpcServer implements Runnable {
     }
 
     private void stopRpcServer() {
-        if(this.server != null && !this.server.isClosed()) {
-            try {
-                this.server.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                this.server = null;
-            }
-        }
+        CloseableUtil.close(this.server);
+//        if(this.server != null && !this.server.isClosed()) {
+//            try {
+//                this.server.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            } finally {
+//                this.server = null;
+//            }
+//        }
     }
 
     public void startRpcServer() throws Exception {
