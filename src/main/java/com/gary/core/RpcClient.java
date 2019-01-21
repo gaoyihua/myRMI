@@ -32,7 +32,8 @@ public class RpcClient {
             public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
                 String rpcBeanId = String.valueOf(method.toString().hashCode());
                 //System.out.println(method.getName() + ":" + rpcBeanId + ":" + method.toString());
-                return rpcClientExecutor.rpcExecutor(rpcBeanId, objects);
+                Class<?> returnType = method.getReturnType();
+                return rpcClientExecutor.rpcExecutor(rpcBeanId, objects, returnType);
             }
         };
         enhancer.setCallback(methodInterceptor);
@@ -49,7 +50,8 @@ public class RpcClient {
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                         String rpcBeanId = String.valueOf(method.toString().hashCode());
                         //System.out.println(method.getName() + ":" + rpcBeanId + ":" + method.toString());
-                        return rpcClientExecutor.rpcExecutor(rpcBeanId, args);
+                        Class<?> returnType = method.getReturnType();
+                        return rpcClientExecutor.rpcExecutor(rpcBeanId, args, returnType);
                     }
                 }
         );

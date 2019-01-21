@@ -8,8 +8,17 @@ public class UserModel implements Serializable {
 	private String id;
 	private String name;
 	private boolean sex;
+	private UserModel next;
 	
 	public UserModel() {
+	}
+
+	public UserModel getNext() {
+		return next;
+	}
+
+	public void setNext(UserModel next) {
+		this.next = next;
 	}
 
 	public String getId() {
@@ -38,7 +47,7 @@ public class UserModel implements Serializable {
 
 	@Override
 	public String toString() {
-		return id + "(" + name + ")" + (sex ? "男" : "女") ;
+		return id + "(" + name + ")" + (sex ? "男" : "女") + "next:" + next.getName();
 	}
 	
 }

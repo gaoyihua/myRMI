@@ -1,12 +1,15 @@
 package com.gary.core;
 
 import com.gary.util.CloseableUtil;
+import com.gary.util.GsonUtil;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.net.Socket;
+import java.util.Map;
 
 /**
  * describe:RPC客户端执行者
@@ -43,18 +46,29 @@ public class RpcClientExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    <T> T rpcExecutor(String rpcBeanId, Object[] parameters) throws  Exception {
+    <T> T rpcExecutor(String rpcBeanId, Object[] parameters, Class<?> returnType) throws  Exception {
         Socket socket = new Socket(rpcServerIp, rpcServerPort);
+        Gson gson = (new GsonBuilder()).create();
 
-        ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-        oos.writeUTF(rpcBeanId);
-        oos.writeObject(parameters);
+//        GsonUtil gsonUtil = new GsonUtil();
+////        gsonUtil.addArg(rpcBeanId, parameters);
+////        String json = gsonUtil.toJson();
 
-        ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-        Object result = ois.readObject();
+        System.out.println("rpcBeanId:" + gson.toJson(rpcBeanId));
+        System.out.println("parameters:" + gson.toJson(parameters));
+//        ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+        DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+        dos.writeUTF(gson.toJson(rpcBeanId));
+        dos.writeUTF(gson.toJson(parameters));
+//        oos.writeUTF(rpcBeanId);
+//        oos.writeObject(parameters);
 
-        CloseableUtil.close(ois, oos, socket);
-
+//        ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+//        Object result = ois.readObject();
+        DataInputStream dis = new DataInputStream(socket.getInputStream());
+        String str = dis.readUTF();
+        Object result = gson.fromJson(str, returnType);
+        CloseableUtil.close(dos, dis, socket);
         return (T)result;
     }
 }

@@ -13,5 +13,6 @@ import java.util.List;
 public interface UserAction {
     UserModel getUserById(String id);
     UserModel getUser(UserModel user);
+    UserModel getUser(UserModel user, UserModel user2);
     List<UserModel> getUserList();
 }
