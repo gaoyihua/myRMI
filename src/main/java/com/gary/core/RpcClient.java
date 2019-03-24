@@ -17,6 +17,11 @@ import java.net.Socket;
  */
 public class RpcClient {
     private RpcClientExecutor rpcClientExecutor;
+    private EServiceCommand serviceCommand;
+
+    public RpcClient(EServiceCommand serviceCommand) {
+        this.rpcClientExecutor = new RpcClientExecutor(serviceCommand);
+    }
 
     public RpcClient(String rpcServerIp, int rpcServerPort) {
         this.rpcClientExecutor =
@@ -31,7 +36,6 @@ public class RpcClient {
             @Override
             public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
                 String rpcBeanId = String.valueOf(method.toString().hashCode());
-                //System.out.println(method.getName() + ":" + rpcBeanId + ":" + method.toString());
                 Class<?> returnType = method.getReturnType();
                 return rpcClientExecutor.rpcExecutor(rpcBeanId, objects, returnType);
             }
@@ -49,7 +53,6 @@ public class RpcClient {
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                         String rpcBeanId = String.valueOf(method.toString().hashCode());
-                        //System.out.println(method.getName() + ":" + rpcBeanId + ":" + method.toString());
                         Class<?> returnType = method.getReturnType();
                         return rpcClientExecutor.rpcExecutor(rpcBeanId, args, returnType);
                     }

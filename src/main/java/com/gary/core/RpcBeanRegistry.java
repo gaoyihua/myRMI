@@ -21,6 +21,7 @@ public class RpcBeanRegistry {
         Method[] methods = interf.getDeclaredMethods();
         System.out.println("rpcBean开始注册");
         for (Method method : methods) {
+
             String rpcBeanId = String.valueOf(method.toString().hashCode());
             System.out.println(method.getName() + "-rpcBeanId:" + rpcBeanId);
 

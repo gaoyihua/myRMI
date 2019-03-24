@@ -52,6 +52,6 @@ public class UserActionImpl implements UserAction, Serializable {
     @Override
     public UserModel getUser(UserModel user, UserModel user2) {
         System.out.println("userModel:" + user);
-        return null;
+        return user;
     }
 }

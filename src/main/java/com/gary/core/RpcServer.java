@@ -1,8 +1,14 @@
 package com.gary.core;
 
 import com.gary.exception.PortNotDefinedException;
+import com.gary.exception.ServiceNameNotDefinedException;
 import com.gary.util.CloseableUtil;
+import com.gary.util.PropertiesParser;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -18,16 +24,28 @@ import java.util.concurrent.TimeUnit;
  */
 public class RpcServer implements Runnable {
     private ServerSocket server;
+    private String ip;
+    private Socket manageCenterServer;
     private int port;
+    private EServiceCommand serviceCommand;
     private volatile boolean goon;
     private static long executorId;
     private final RpcBeanFactory rpcBeanFactory;
     private ThreadPoolExecutor threadPool;
+    private static final Gson gson = new GsonBuilder().create();
 
 
-    public RpcServer(int port) {
+    public RpcServer(int port, EServiceCommand serviceCommand) {
         this();
         this.port = port;
+        this.serviceCommand = serviceCommand;
+    }
+
+    public RpcServer(String ip, int port, EServiceCommand serviceCommand) {
+        this();
+        this.ip = ip;
+        this.port = port;
+        this.serviceCommand = serviceCommand;
     }
 
     public RpcServer() {
@@ -41,8 +59,38 @@ public class RpcServer implements Runnable {
         return rpcBeanFactory;
     }
 
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
+    public void setServiceName(EServiceCommand serviceCommand) {
+        this.serviceCommand = serviceCommand;
+    }
+
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public void linkServerManageCenter(String manageCenterIp, int manageCenterPort) {
+        try {
+            manageCenterServer = new Socket(manageCenterIp, manageCenterPort);
+
+            DataOutputStream dos = new DataOutputStream(manageCenterServer.getOutputStream());
+
+            dos.writeUTF(gson.toJson(EServiceCommand.REGISTER_SERVICE));
+            dos.flush();
+
+            DataInputStream dis = new DataInputStream(manageCenterServer.getInputStream());
+
+            if (gson.fromJson(dis.readUTF(), EServiceCommand.class).equals(EServiceCommand.YES)) {
+                String sendMessage = gson.toJson(this.serviceCommand) + "-" + this.ip + "-" + this.port;
+                dos.writeUTF(sendMessage);
+            }
+
+            new Thread(new Keeper(dis, dos)).start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void registryRpc(String xmlPath) {
@@ -67,19 +115,10 @@ public class RpcServer implements Runnable {
 
     private void stopRpcServer() {
         CloseableUtil.close(this.server);
-//        if(this.server != null && !this.server.isClosed()) {
-//            try {
-//                this.server.close();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            } finally {
-//                this.server = null;
-//            }
-//        }
     }
 
     public void startRpcServer() throws Exception {
-        if (this.port == 0) {
+        if (this.port == 0 ) {
             throw new PortNotDefinedException();
         }
         this.server = new ServerSocket(port);
@@ -89,6 +128,16 @@ public class RpcServer implements Runnable {
 
     @Override
     public void run() {
+        try {
+            if (this.serviceCommand != null) {
+                PropertiesParser.loadProperties("/smc.properties");
+                String manageCenterIp = PropertiesParser.value("manageCenterIp");
+                String manageCenterPort = PropertiesParser.value("manageCenterPort");
+                linkServerManageCenter(manageCenterIp, Integer.valueOf(manageCenterPort));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         while (goon) {
             try {
                 Socket rpcClient = server.accept();
@@ -99,5 +148,33 @@ public class RpcServer implements Runnable {
             }
         }
         stopRpcServer();
+    }
+
+    public class Keeper implements Runnable {
+        private DataInputStream dis;
+        private DataOutputStream dos;
+
+        public Keeper(DataInputStream dis, DataOutputStream dos) {
+            this.dis = dis;
+            this.dos = dos;
+        }
+
+        @Override
+        public void run() {
+            while (goon) {
+                try {
+                    EServiceCommand command = gson.fromJson(dis.readUTF(), EServiceCommand.class);
+                    if (command != null) {
+                        if (command.equals(EServiceCommand.TEST)) {
+                            dos.writeUTF(gson.toJson(EServiceCommand.TEST));
+                        }
+                    }
+                } catch (IOException e) {
+                    goon = false;
+                    e.printStackTrace();
+                }
+            }
+            CloseableUtil.close(dis, dos);
+        }
     }
 }
